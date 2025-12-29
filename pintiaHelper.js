@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         PTA pintia 学习助手 (全能版1.0)
+// @name         PTA pintia 学习助手
 // @namespace    a jjjjjjjjjjjjun.
 // @version      1.0
 // @description  自动识别题型，支持判断、单选、函数、编程题。可配置自动切换题型。支持PTA Pintia 程序题 自动答题 ai答题 程序设计类实验辅助教学平台 拼题A
@@ -10,6 +10,8 @@
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
 // @connect      43.142.37.200
+// @connect      ajunthinklab.top
+// @icon       	 http://43.142.37.200/icon.png
 // @downloadURL https://update.greasyfork.org/scripts/560207/PTA%20pintia%20%E5%AD%A6%E4%B9%A0%E5%8A%A9%E6%89%8B%20%28%E5%85%A8%E8%83%BD%E7%89%8810%29.user.js
 // @updateURL https://update.greasyfork.org/scripts/560207/PTA%20pintia%20%E5%AD%A6%E4%B9%A0%E5%8A%A9%E6%89%8B%20%28%E5%85%A8%E8%83%BD%E7%89%8810%29.meta.js
 // ==/UserScript==
@@ -20,11 +22,8 @@
     // --- 0. 配置管理 ---
     let isRunning = false;
     let solveCount = 0;
-    
-    // Obfuscated URLs (Base64)
-    const _0x4f2a = ['aHR0cDovLzQzLjE0Mi4zNy4yMDA6MTE0NQ==', 'aHR0cDovLzQzLjE0Mi4zNy4yMDAvZG9uYXRlLnBuZw=='];
-    const SERVER_URL = atob(_0x4f2a[0]);
-    const DONATE_IMAGE_URL = atob(_0x4f2a[1]);
+    const SERVER_URL = 'http://43.142.37.200:1145'; 
+    const DONATE_IMAGE_URL = 'http://43.142.37.200/donate.png';
 
     const CONFIG = {
         get autoNext() { return GM_getValue('pta_auto_next', false); },
@@ -504,21 +503,21 @@
                                 // 1. 定位最后一段答案区域
                                 const sections = cleanedContent.split(/【最终答案】[：:\n\s]*/i);
                                 let targetContent = sections[sections.length - 1].trim();
-                                
+
                                 // 如果最后一段太短（可能 AI 只回复了“请检查”之类的话），尝试往前找
                                 if (targetContent.length < 5 && sections.length > 1) {
                                     targetContent = sections[sections.length - 2].trim();
                                 }
 
                                 let answers = [];
-                                
+
                                 // 2. 顺序提取 [空n] 标记的内容
                                 for (let i = 1; i <= 50; i++) {
                                     // 匹配 [空i] 到下一个 [空d] 或结尾
                                     // 使用 gi 确保能找到该段落内最后一个 [空i]（防止 AI 在同一段内反复修改）
                                     const markerRegex = new RegExp(`\\[空${i}\\]([\\s\\S]*?)(?=\\[空\\d+\\]|$)`, 'gi');
                                     const matches = targetContent.match(markerRegex);
-                                    
+
                                     if (matches) {
                                         // 取本段内最后一次出现的该编号空
                                         const lastMatch = matches[matches.length - 1];
@@ -607,7 +606,7 @@
 
         // 针对 react-select 的多重触发策略
         const triggerElements = [
-            document.querySelector('.select__dropdown-indicator svg'), // 你提供的那个 SVG
+            document.querySelector('.select__dropdown-indicator svg'),
             document.querySelector('.select__dropdown-indicator'),
             document.querySelector('.select__control'),
             document.querySelector('input[id^="react-select-"][role="combobox"]')
@@ -1023,13 +1022,13 @@
 
                 if (!isRunning) return;
                 addInfoLog(`AI 生成完毕，正在填入编辑器...`);
-                
+
                 let codeToFill = result.full;
                 if (CONFIG.removeComments) {
                     addInfoLog(`[优化] 正在本地清除代码注释以符合提交要求...`);
                     codeToFill = removeComments(result.full, targetLang);
                 }
-                
+
                 const filled = await fillCodeEditor(codeToFill);
 
                 if (filled) {
