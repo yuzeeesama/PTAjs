@@ -22,7 +22,7 @@
     // --- 0. 配置管理 ---
     let isRunning = false;
     let solveCount = 0;
-    const SERVER_URL = 'http://43.142.37.200:1145'; 
+    const SERVER_URL = 'http://43.142.37.200:1145';
     const DONATE_IMAGE_URL = 'http://43.142.37.200/donate.png';
 
     const CONFIG = {
@@ -606,7 +606,7 @@
 
         // 针对 react-select 的多重触发策略
         const triggerElements = [
-            document.querySelector('.select__dropdown-indicator svg'),
+            document.querySelector('.select__dropdown-indicator svg'), // 你提供的那个 SVG
             document.querySelector('.select__dropdown-indicator'),
             document.querySelector('.select__control'),
             document.querySelector('input[id^="react-select-"][role="combobox"]')
@@ -930,7 +930,8 @@
         if (questions.length === 0) return;
         addInfoLog(`[${typeName}] 开始处理 ${questions.length} 道题目`);
 
-        const blankSelector = 'input[data-blank="true"], textarea[data-blank="true"]';
+        const blankSelector = 'input, textarea';
+        const blankParentSelector = '[data-blank-index]';
 
         for (let i = 0; i < questions.length; i++) {
             if (!isRunning) return;
@@ -939,7 +940,7 @@
             if (!textElement) continue;
 
             const clone = textElement.cloneNode(true);
-            const blanksInClone = clone.querySelectorAll(blankSelector);
+            const blanksInClone = clone.querySelectorAll(blankParentSelector);
             blanksInClone.forEach((b, idx) => {
                 const marker = document.createElement('span');
                 marker.innerText = ` [空${idx + 1}] `;
@@ -948,7 +949,7 @@
                 }
             });
             const questionText = clone.innerText.trim();
-            const realBlanks = qBlock.querySelectorAll(blankSelector);
+            const realBlanks = qBlock.querySelectorAll(blankParentSelector);
 
             if (realBlanks.length === 0) continue;
 
@@ -965,16 +966,19 @@
                 const aiAnswers = result.answers || [];
                 for (let j = 0; j < realBlanks.length; j++) {
                     if (aiAnswers[j]) {
-                        const el = realBlanks[j];
-                        const value = aiAnswers[j];
+                        const blankParent = realBlanks[j];
+                        const el = blankParent.querySelector('input');
+                        if (el) {
+                            const value = aiAnswers[j];
 
-                        // 修复：针对 React 状态同步的强力赋值
-                        const lastValue = el.value;
-                        el.value = value;
-                        const tracker = el._valueTracker;
-                        if (tracker) tracker.setValue(lastValue);
-                        el.dispatchEvent(new Event('input', { bubbles: true }));
-                        el.dispatchEvent(new Event('change', { bubbles: true }));
+                            // 修复：针对 React 状态同步的强力赋值
+                            const lastValue = el.value;
+                            el.value = value;
+                            const tracker = el._valueTracker;
+                            if (tracker) tracker.setValue(lastValue);
+                            el.dispatchEvent(new Event('input', { bubbles: true }));
+                            el.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
                     }
                 }
                 updateLog(logItem, aiAnswers.join(' | '));
